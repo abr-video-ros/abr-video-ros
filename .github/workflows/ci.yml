@@ -1,42 +1,23 @@
-name: Build Pipeline
+name: jazzy
 
 on:
-  push:
-    branches: [ main, develop, jazzy ]
   pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
-
-env:
-  ROS_DISTRO: jazzy
+    branches:
+      - jazzy
+  push:
+    branches:
+      - jazzy
 
 jobs:
-  build:
-    name: Build (ROS ${{ matrix.ros_distro }})
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        ros_distro: [jazzy]
-        include:
-          - ros_distro: jazzy
-            ubuntu_version: ubuntu-22.04
-            container: osrf/ros:jazzy-desktop-full
-    
+  build-and-test:
+    runs-on: ${{ matrix.os }}
     container:
-      image: ${{ matrix.container }}
-      options: --user root
-
+      image: osrf/ros:jazzy-desktop
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+      fail-fast: false
     steps:
-      - name: Setup workspace
-        run: |
-          apt-get update && apt-get install -y \
-            wget \
-            curl \
-            gnupg2 \
-            lsb-release \
-            ca-certificates
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -44,80 +25,33 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          apt-get update
-          apt-get install -y \
-            python3-colcon-common-extensions \
-            python3-colcon-mixin \
-            python3-rosdep \
+          apt-get update && apt-get install -y \
+            wget \
             python3-vcstool \
+            python3-colcon-coveragepy-result \
+            python3-rosdep \
             build-essential \
             cmake \
-            git \
-            libeigen3-dev \
-            pkg-config \
-            libavcodec-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libx264-dev \
-            libx265-dev \
-            libvpx-dev \
-            libfdk-aac-dev \
-            libmp3lame-dev \
-            libopus-dev \
-            yasm \
-            wget
+            git
 
-      - name: Install ROS dependencies
+      - name: Initialize rosdep
         run: |
           rosdep init || echo "rosdep already initialized"
-          rosdep update --rosdistro ${{ matrix.ros_distro }}
-          rosdep install --from-paths src --ignore-src -r -y --rosdistro ${{ matrix.ros_distro }}
+          rosdep update --rosdistro jazzy
 
-      - name: Setup colcon mixins
+      - name: Install ROS dependencies with rosdep
         run: |
-          colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml || true
-          colcon mixin update default || true
+          rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
 
-      - name: Build workspace
-        run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon build \
-            --cmake-args \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            --ament-cmake-args \
-              -DCMAKE_BUILD_TYPE=Release \
-            --event-handlers console_direct+ \
-            --parallel-workers $(nproc)
-
-      - name: Verify build success
-        run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          source install/setup.bash
-          echo "=== Build completed successfully ==="
-          echo "Packages built:"
-          ls install/
-          echo "=== Checking package discovery ==="
-          ros2 pkg list | grep abr_image_transport || echo "Package discovery check completed"
-
-  build-success:
-    name: Build Success
-    runs-on: ubuntu-22.04
-    needs: [build]
-    if: always()
-    steps:
-      - name: Check build results
-        run: |
-          echo "=== Build Pipeline Results ==="
-          echo "Build Status: ${{ needs.build.result }}"
-          
-          if [[ "${{ needs.build.result }}" == "success" ]]; then
-            echo "Build completed successfully!"
-            exit 0
-          else
-            echo "Build failed"
-            exit 1
-          fi
+      - name: build and test
+        uses: ros-tooling/action-ros-ci@0.3.15
+        with:
+          package-name: abr-video-ros
+          target-ros2-distro: jazzy
+          vcs-repo-file-url: ""
+          colcon-defaults: |
+            {
+              "test": {
+                "parallel-workers" : 1
+              }
+            }
