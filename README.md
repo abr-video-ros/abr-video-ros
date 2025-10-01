@@ -1,7 +1,7 @@
 # ABR Image Transport
 
 ![ROS 2](https://img.shields.io/badge/ROS-2-blue)
-![Build](https://img.shields.io/github/actions/workflow/status/abr-video-ros/abr-video-ros/build.yml?branch=main)
+![Build](https://img.shields.io/github/actions/workflow/status/abr-video-ros/abr-video-ros/ci.yml?branch=jazzy)
 ![License](https://img.shields.io/badge/license-GPLv3-green)
 ![Jazzy](https://img.shields.io/badge/ROS_2-Jazzy-brightgreen)
 
@@ -71,7 +71,7 @@ ros2 run rqt_image_view rqt_image_view /image_raw/abr
 <summary>🔧 System Requirements & Dependencies</summary>
 
 **Requirements:**
-- Ubuntu 22.04+ with ROS 2 Jazzy
+- Ubuntu 24.04+ with ROS 2 Jazzy
 - 4GB+ RAM (8GB recommended)
 - Multi-core CPU (encoding is intensive)
 
