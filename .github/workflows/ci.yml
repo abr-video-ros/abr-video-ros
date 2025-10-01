@@ -13,14 +13,14 @@ env:
 jobs:
   build:
     name: Build (ROS ${{ matrix.ros_distro }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         ros_distro: [jazzy]
         include:
           - ros_distro: jazzy
-            ubuntu_version: ubuntu-24.04
+            ubuntu_version: ubuntu-22.04
             container: osrf/ros:jazzy-desktop-full
     
     container:
@@ -54,7 +54,6 @@ jobs:
             cmake \
             git \
             libeigen3-dev \
-            libgeographic-dev \
             pkg-config \
             libavcodec-dev \
             libavformat-dev \
@@ -106,7 +105,7 @@ jobs:
 
   build-success:
     name: Build Success
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [build]
     if: always()
     steps:
@@ -116,9 +115,9 @@ jobs:
           echo "Build Status: ${{ needs.build.result }}"
           
           if [[ "${{ needs.build.result }}" == "success" ]]; then
-            echo "🎉 Build completed successfully!"
+            echo "Build completed successfully!"
             exit 0
           else
-            echo "❌ Build failed"
+            echo "Build failed"
             exit 1
           fi
