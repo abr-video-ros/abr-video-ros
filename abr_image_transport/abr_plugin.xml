@@ -1,0 +1,13 @@
+<library path="abr_image_transport_component">
+  <class name="image_transport/abr_pub" type="abr_image_transport::AbrPublisher" base_class_type="image_transport::PublisherPlugin">
+    <description>
+      This plugin encodes a regular image into an ABR image for transport.
+    </description>
+  </class>
+
+  <class name="image_transport/abr_sub" type="abr_image_transport::AbrSubscriber" base_class_type="image_transport::SubscriberPlugin">
+    <description>
+      This plugin subscribes to an ABR image and decodes it to a regular image.
+    </description>
+  </class>
+</library>

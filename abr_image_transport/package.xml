@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>abr_image_transport</name>
+  <version>1.0.0</version>
+  <description>
+    abr_image_transport provides a plugin to image_transport for
+    transparently sending an ABR image.
+  </description>
+  <maintainer email="josemiguel.guerrero@urjc.es">Jose Miguel Guerrero Hernandez</maintainer>
+  <author>Jose Miguel Guerrero Hernandez</author>
+  <license>GPL-3.0-only</license>
+
+  <!-- Build tool dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <buildtool_depend>pkg-config</buildtool_depend>
+  <depend>abr_image_transport_interfaces</depend>
+  <depend>abr_image_transport_monitor</depend>
+  <depend>abr_image_transport_codecs</depend>
+
+  <!-- ROS dependencies -->
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rcutils</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>pluginlib</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rcutils</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <!-- System dependencies (Ubuntu packages) -->
+  <build_depend>libavcodec-dev</build_depend>
+  <build_depend>libavutil-dev</build_depend>
+  <build_depend>libswscale-dev</build_depend>
+  <!-- <build_depend>libva-dev</build_depend> -->
+  <!-- Install manually on Ubuntu: sudo apt install libva-dev -->
+  <build_depend>libopencv-dev</build_depend>
+
+  <exec_depend>libavcodec-dev</exec_depend>
+  <exec_depend>libavutil-dev</exec_depend>
+  <exec_depend>libswscale-dev</exec_depend>
+  <exec_depend>libopencv-dev</exec_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <image_transport plugin="${prefix}/abr_plugin.xml" />
+  </export>
+</package>

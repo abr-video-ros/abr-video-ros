@@ -1,0 +1,332 @@
+# =============================================================================
+# ABR Image Transport Configuration
+# =============================================================================
+# This file configures the Adaptive Bitrate Video Streaming system for ROS 2
+# 
+# Author: José Miguel Guerrero Hernández
+# License: GNU General Public License v3.0
+#
+# IMPORTANT NOTES:
+# - Configuration is loaded at startup; *TO-DO: some parameters can be updated at runtime
+# - All bitrates are specified in bits per second (bps)
+# - The system automatically falls back to safe defaults on configuration errors
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+global:
+  # Codec implementation to use
+  # Currently supported: 'ffmpeg' (H.264/H.265/MPEG-4 via FFmpeg)
+  codec_type: ffmpeg
+  
+  # Default priority mode for encoding profiles
+  # Options: 'speed' (ultra-low latency), 'balanced' (recommended), 'quality' (maximum quality)
+  priority_mode: balanced
+
+# =============================================================================
+# ABR MONITOR CONFIGURATION
+# =============================================================================
+# Controls automatic bitrate adaptation based on network conditions
+abr_monitor:
+  # Enable/disable automatic bitrate adaptation
+  adaptation_enabled: true
+  
+  # Factor to decrease bitrate when network conditions degrade (0.0-1.0)
+  decrease_factor: 0.6
+  
+  # FPS variance threshold to trigger adaptation (0.0-1.0)
+  # Lower values = more sensitive to frame drops
+  fps_variance_threshold: 0.9
+  
+  # Factor to increase bitrate when network conditions improve (>1.0)
+  increase_factor: 1.8
+  
+  # Maximum safe bitrate in bits per second (8 Mbps)
+  max_bitrate_safe: 8000000
+  
+  # Minimum safe bitrate in bits per second (500 kbps)  
+  min_bitrate_safe: 500000
+  
+  # Number of consecutive stable measurements before allowing bitrate increase
+  stable_window: 5
+  
+  # Size of the sliding window for performance measurements
+  window_size: 20
+
+# =============================================================================
+# ABR PUBLISHER CONFIGURATION
+# =============================================================================
+# Settings for the video stream publisher component
+abr_publisher:
+  # Initial target bitrate in bits per second (2 Mbps = 2,000,000 bps)
+  # This can be adjusted at runtime via the ABR parameter service
+  # Range: 100,000 - 10,000,000 bps (100 kbps - 10 Mbps)
+  bitrate: 2000000
+  
+  # Target frames per second for video encoding
+  # Common values: 15, 24, 30, 60
+  # Higher FPS = smoother video but higher bandwidth usage
+  fps: 30
+  
+  # ROS service name for dynamic parameter updates
+  # Clients can call this service to change bitrate, FPS, etc. at runtime
+  service_name: abr_params
+
+# =============================================================================
+# ABR SUBSCRIBER CONFIGURATION  
+# =============================================================================
+# Settings for the video stream subscriber component
+abr_subscriber:
+  # Enable performance monitoring on subscriber side
+  # This helps track decoding performance and network conditions
+  enable_monitoring: true
+  
+  # Frequency (Hz) of monitoring updates sent to the publisher
+  # Higher frequency = more responsive adaptation but higher overhead
+  monitor_frequency: 10
+
+# =============================================================================
+# SYSTEM LOGGING CONFIGURATION
+# =============================================================================
+# Controls logging output for the ABR system components
+logging:
+  # Enable performance statistics logging (encoding times, bitrates, etc.)
+  # Useful for debugging and performance analysis
+  enable_stats: true
+  
+  # Enable detailed timing measurements (may impact performance slightly)
+  # Only enable for debugging - can add ~1-2ms overhead per frame
+  enable_timing: false
+  
+  # ROS logging level for ABR components
+  # Options: debug, info, warn, error, fatal
+  # 'info' recommended for production, 'debug' for troubleshooting
+  level: info
+
+# =============================================================================
+# CODEC CONFIGURATION
+# =============================================================================
+codecs:
+  ffmpeg:
+    # ==========================================================================
+    # CODEC SELECTION
+    # ==========================================================================
+    # Primary codec to use for video encoding/decoding
+    # Options: 'libx264' (H.264 - recommended), 'libx265' (H.265 - newer), 'mpeg4' (MPEG-4 - legacy)
+    codec_name: libx264
+    
+    # ==========================================================================
+    # FFMPEG LOGGING CONFIGURATION
+    # ==========================================================================
+    # Controls FFmpeg's internal logging output
+    logging:
+      # FFmpeg log level: quiet, panic, fatal, error, warning, info, verbose, debug, trace
+      # 'warning' suppresses verbose libx264 configuration output
+      level: warning
+    
+    # ==========================================================================
+    # ENCODER CONFIGURATION
+    # ==========================================================================
+    # Core encoding parameters (overridden by priority profiles)
+    encoder:
+      # Number of B-frames between I and P frames (0-16)
+      b_frames: 0
+      
+      # Constant Rate Factor for quality-based encoding (0-51, lower = better quality)
+      crf: 23
+      
+      # Keyframe interval (GOP size) - frames between keyframes
+      keyframe_interval: 30
+      
+      # Maximum quantization parameter (0-51, higher = more compression)
+      max_qp: 45
+      
+      # Minimum quantization parameter (0-51, lower = better quality)
+      min_qp: 8
+      
+      # Rate control method: 'cbr' (constant), 'vbr' (variable), 'crf' (quality-based)
+      rate_control: vbr
+      
+      # HRD (Hypothetical Reference Decoder) compliance mode
+      # This setting controls whether strict VBV (Video Buffering Verifier) constraints are applied:
+      # 
+      # true:  Enable HRD compliance with strict VBV buffer constraints
+      #        - Prevents runtime bitrate changes during encoding
+      #        - Good for broadcasting and strict standards compliance
+      #        - May show warnings: "CBR HRD requires constant bitrate"
+      #        
+      # false: Flexible VBV mode without HRD compliance (RECOMMENDED for ABR)
+      #        - Allows runtime bitrate adaptation during encoding  
+      #        - Good for adaptive streaming and real-time applications
+      #        - No VBV/HRD warnings during bitrate changes
+      hrd_compliance: false
+    
+    # ==========================================================================
+    # DECODER CONFIGURATION
+    # ==========================================================================
+    # Settings for video decoding
+    decoder:
+      # Number of decoder threads (0 = auto-detect)
+      thread_count: 0
+      
+      # Threading type: 'frame' or 'slice'
+      thread_type: frame
+    
+    # ==========================================================================
+    # PERFORMANCE OPTIMIZATIONS
+    # ==========================================================================
+    # Advanced encoder performance settings
+    performance:
+      # Enable fast P-skip decision (improves speed, may reduce quality)
+      fast_pskip: true
+      
+      # Enable mixed reference frames (better quality, slower encoding)
+      mixed_refs: false
+      
+      # Trellis quantization level (0=disabled, 1-2=enabled, higher=slower)
+      trellis: 0
+    
+    # ==========================================================================
+    # CODEC-SPECIFIC CONFIGURATIONS
+    # ==========================================================================
+    # Default parameters for each supported codec
+    codec_configs:
+      # H.264 (libx264) configuration
+      libx264:
+        # Context Adaptive Binary Arithmetic Coding (better compression)
+        cabac: true
+        
+        # Deblocking filter (reduces blocking artifacts)
+        deblock: true
+        
+        # H.264 level (determines max resolution/bitrate)
+        level: '4.0'
+        
+        # Encoding preset: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow
+        preset: medium
+        
+        # H.264 profile: baseline, main, high
+        profile: main
+        
+        # Number of reference frames (1-16, more = better quality but slower)
+        refs: 2
+        
+        # Tuning preset: film, animation, grain, stillimage, psnr, ssim, fastdecode, zerolatency
+        tune: zerolatency
+      
+      # H.265 (libx265) configuration  
+      libx265:
+        # Encoding preset (same options as x264)
+        preset: ultrafast
+        
+        # H.265 profile: main, main10, main12
+        profile: main
+        
+        # Tuning preset for low latency
+        tune: zerolatency
+      
+      # MPEG-4 configuration (legacy support)
+      mpeg4:
+        # MPEG-4 specific parameters to avoid compatibility issues
+        # Disable problematic features that cause runtime errors
+        sc_threshold: 1000000000  # Set scene change threshold to maximum (disables scene change detection)
+        preset: null
+    
+    # ==========================================================================
+    # PRIORITY PROFILES
+    # ==========================================================================
+    # Predefined encoding profiles optimized for specific use cases
+    # Note: Only libx264 profiles are fully configured; other codecs use defaults
+    priority_profiles:
+      # SPEED PROFILE - Ultra-low latency streaming (< 100ms)
+      speed:
+        libx264:
+          b_frames: 0              # No B-frames for minimal latency
+          bitrate: 1000000         # 1 Mbps - lower bitrate for speed
+          cabac: false             # Disable CABAC for faster encoding
+          crf: 28                  # Higher CRF = lower quality but faster
+          deblock: false           # Disable deblocking for speed
+          keyframe_interval: 10    # Frequent keyframes for low latency
+          level: '3.1'             # Lower level for compatibility
+          max_qp: 51               # Allow maximum compression
+          min_qp: 18               # Reasonable minimum quality
+          preset: ultrafast        # Fastest encoding preset
+          profile: baseline        # Most compatible profile
+          refs: 1                  # Single reference frame (required for intra-refresh)
+          tune: zerolatency        # Optimize for zero latency
+        
+        # Basic libx265 profile for speed
+        libx265:
+          bitrate: 1000000         # 1 Mbps - lower bitrate for speed
+          preset: ultrafast        # Fastest preset for H.265
+          profile: main            # Main profile
+          tune: zerolatency        # Zero latency tuning
+        
+        # Basic MPEG-4 profile for speed  
+        mpeg4:
+          bitrate: 1000000         # 1 Mbps - lower bitrate for speed
+          sc_threshold: 1000000000 # Disable scene change detection
+          keyframe_interval: 10    # Frequent keyframes for low latency
+          max_qp: 31              # Reasonable max quality for MPEG-4
+      
+      # BALANCED PROFILE - Good compromise between speed and quality
+      balanced:
+        libx264:
+          b_frames: 1              # Minimal B-frames for some compression benefit
+          bitrate: 2000000         # 2 Mbps - balanced bitrate
+          cabac: true              # Enable CABAC for better compression
+          crf: 23                  # Good quality/speed balance
+          deblock: true            # Enable deblocking for quality
+          keyframe_interval: 20    # Moderate keyframe frequency
+          level: '4.0'             # Standard level for most applications
+          max_qp: 40               # Reasonable maximum compression
+          min_qp: 10               # Good minimum quality
+          preset: medium           # Balanced encoding preset
+          profile: main            # Good compatibility and features
+          refs: 1                  # Single reference frame (enables intra-refresh)
+          tune: zerolatency        # Still optimize for low latency
+        
+        # Basic libx265 profile for balanced performance
+        libx265:
+          bitrate: 2000000         # 2 Mbps - balanced bitrate
+          preset: fast             # Fast preset for H.265
+          profile: main            # Main profile
+          tune: zerolatency        # Low latency tuning
+        
+        # Basic MPEG-4 profile for balanced performance
+        mpeg4:
+          bitrate: 2000000         # 2 Mbps - balanced bitrate
+          sc_threshold: 1000000000 # Disable scene change detection
+          keyframe_interval: 20    # Moderate keyframe frequency
+          max_qp: 28              # Good quality for MPEG-4
+      
+      # QUALITY PROFILE - Maximum quality for high-end applications
+      quality:
+        libx264:
+          b_frames: 3              # More B-frames for better compression
+          bitrate: 4000000         # 4 Mbps - high bitrate for quality
+          cabac: true              # Enable CABAC for best compression
+          crf: 20                  # High quality setting
+          deblock: true            # Enable deblocking for quality
+          keyframe_interval: 30    # Standard keyframe interval
+          level: '4.0'             # Standard level
+          max_qp: 35               # Limit maximum compression
+          min_qp: 8                # High minimum quality
+          preset: slow             # High quality encoding preset
+          profile: high            # Best quality profile
+          refs: 3                  # Multiple reference frames (disables intra-refresh)
+          tune: film               # Optimize for film content (disables intra-refresh)
+        
+        # Basic libx265 profile (uses libx265 defaults with minimal changes)
+        libx265:
+          bitrate: 4000000         # 4 Mbps - high bitrate for quality
+          preset: medium           # Balanced preset for H.265
+          profile: main            # Main profile
+          tune: null               # Use FFmpeg defaults
+        
+        # Basic MPEG-4 profile (legacy support)
+        mpeg4:
+          bitrate: 4000000         # 4 Mbps - high bitrate for quality
+          sc_threshold: 1000000000 # Disable scene change detection
+          keyframe_interval: 30    # Standard keyframe interval
+          max_qp: 25              # High quality for MPEG-4

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>abr_image_transport_monitor</name>
+  <version>1.0.0</version>
+  <description>
+    Library package for adaptive image transport monitoring
+  </description>
+
+  <maintainer email="josemiguel.guerrero@urjc.es">Jose Miguel Guerrero Hernandez</maintainer>
+  <license>GPL-3.0-only</license>
+
+  <!-- Build tool dependency -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Runtime and build dependencies -->
+  <depend>rclcpp</depend>
+  <depend>rcutils</depend>
+  <depend>abr_image_transport_interfaces</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>yaml-cpp</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
